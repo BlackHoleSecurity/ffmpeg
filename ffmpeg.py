@@ -16,8 +16,7 @@ def loading_animation(stop_event):
         sys.stdout.write(f'\r[¡] Converting to Instagram format... {c}')
         sys.stdout.flush()
         time.sleep(0.08)
-    sys.stdout.write('\r' + ' ' * 55 + '\r')
-
+    sys.stdout.write('\r' + '_' * 55 + '\r')
 
 def get_quality_settings(quality):
     if quality == "high":
@@ -26,10 +25,9 @@ def get_quality_settings(quality):
     elif quality == "low":
         return {"crf": "22", "preset": "medium", "bitrate": "8500k", "maxrate": "11000k", "bufsize": "14000k",
                 "unsharp": "3:3:0.3:3:3:0.15", "eq": "contrast=1.05:brightness=0.0"}
-    else:  # medium
+    else: # medium
         return {"crf": "18", "preset": "slower", "bitrate": "12500k", "maxrate": "15500k", "bufsize": "20000k",
                 "unsharp": "3:3:0.5:3:3:0.25", "eq": "contrast=1.08:brightness=0.005"}
-
 
 def convert_to_ig(input_file, output_file="output_ig.mp4", quality="medium"):
     if not os.path.exists(input_file):
@@ -59,39 +57,59 @@ def convert_to_ig(input_file, output_file="output_ig.mp4", quality="medium"):
         '-y', output_file
     ]
 
-    print(f"\n[+] Input   : {input_file}")
-    print(f"[>] Output  : {output_file}")
+    print(f"\n[+] Input : {input_file}")
+    print(f"[>] Output : {output_file}")
     print(f"[*] Quality : {quality.upper()}\n")
 
     stop_loading = threading.Event()
     loading_thread = threading.Thread(target=loading_animation, args=(stop_loading,))
     loading_thread.start()
 
+    proc = None
     try:
-        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc.wait()
+
+        if proc.returncode!= 0:
+            raise subprocess.CalledProcessError(proc.returncode, command)
+
         stop_loading.set()
         loading_thread.join()
         print("[#] Conversion completed successfully!")
         print(f"[*] Saved as: {output_file}")
         return True
+
+    except KeyboardInterrupt:
+        print("\n[!] Ctrl+C detected, stopping ffmpeg...")
+        if proc:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        stop_loading.set()
+        loading_thread.join()
+        print("[x] Conversion cancelled by user.")
+        return False
+
     except subprocess.CalledProcessError:
         stop_loading.set()
         loading_thread.join()
         print("[x] Conversion failed!")
         return False
+
     except FileNotFoundError:
         stop_loading.set()
         loading_thread.join()
         print("[x] FFmpeg not found!")
         return False
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Instagram Video Converter (60fps)")
     parser.add_argument("input", help="Input video file")
-    parser.add_argument("output", nargs='?', default="output_ig.mp4", 
+    parser.add_argument("output", nargs='?', default="output_ig.mp4",
                        help="Output video file (optional)")
-    parser.add_argument("-q", "--quality", choices=["low", "medium", "high"], 
+    parser.add_argument("-q", "--quality", choices=["low", "medium", "high"],
                        default="medium", help="Quality level (default: medium)")
 
     args = parser.parse_args()
