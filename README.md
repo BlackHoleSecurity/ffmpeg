@@ -6,11 +6,6 @@ Author : ITermSec
 # ffmpeg converter
 *Simplify converting videos.mp4 for smooth Instagram Story uploads.*
 
-## Screenshots
-<img src="Screenshot_20260528_154157_Terminal.jpg">  
-<img src="Screenshot_20260528_154314_Terminal.jpg">  
-<img src="Screenshot_20260528_154645_Terminal.jpg">  
-
 **Installation**:
 
 `~# apt-get install -y python3 ffmpeg git`
