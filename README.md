@@ -3,7 +3,7 @@
 
 Author : ITermSec
 
-# ffmpeg converter
+# ffmpeg video converter
 *Simplify converting videos.mp4 for smooth Instagram Story uploads.*
 
 **Installation**:
